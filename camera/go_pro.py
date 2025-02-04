@@ -17,7 +17,7 @@ class ImagePublisher(Node):
     def timer_callback(self):
         ret, frame = self.cap.read()
         if ret == True:
-            self.publisher_.publish(self.br.cv2_to_imgmsg(frame))
+            self.publisher_.publish(self.br.cv2_to_imgmsg(frame, encoding="bgr8"))
         else:
             self.cap.release()
 
