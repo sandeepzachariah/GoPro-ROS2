@@ -76,6 +76,20 @@ python3 latency.py
 - average latency in milliseconds
 - standard deviation in milliseconds
 
+Use the average latency as the timestamp correction offset when launching the camera node:
+
+```bash
+ros2 launch camera_cpp go_pro_launch.py latency_offset_ms:=<average_latency_ms>
+```
+
+For example, if `latency.py` prints an average latency of `42.300 ms`:
+
+```bash
+ros2 launch camera_cpp go_pro_launch.py latency_offset_ms:=42.3
+```
+
+The node subtracts this offset from both `/go_pro/image` and `/go_pro/camera_info` header timestamps. `timestamps.txt` remains the raw measurement file; use `timestamps_filtered.txt` only for latency calculation.
+
 ## OCR Crop Check
 
 If OCR failures are high, preview the crop region:

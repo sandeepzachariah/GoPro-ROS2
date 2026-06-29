@@ -23,5 +23,11 @@ Press 'Enter' when prompted. \
 ros2 launch <pkg_name> go_pro_launch.py
 ```
 
+To subtract a measured latency from the published ROS image timestamps, pass the offset in milliseconds:
+```bash
+ros2 launch camera_cpp go_pro_launch.py latency_offset_ms:=261.3
+```
+The same corrected timestamp is used for both the image and camera info messages.
+
 ## Configuration
 Calibrate the camera and place the calibrated camera parameter files in the `config/camera_params.yaml` file. ROS2 provides a camera calibration package. 

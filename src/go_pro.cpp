@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <yaml-cpp/yaml.h>
+#include <algorithm>
 
 class ImagePublisher : public rclcpp::Node
 {
@@ -78,6 +79,11 @@ public:
 
         this->declare_parameter<std::string>("frame_id", "go_pro_optical_frame");
         this->get_parameter("frame_id", frame_id_);
+
+        this->declare_parameter<double>("latency_offset_ms", 0.0);
+        const double latency_offset_ms = std::max(0.0, this->get_parameter("latency_offset_ms").as_double());
+        latency_offset_ = rclcpp::Duration::from_seconds(latency_offset_ms / 1000.0);
+        RCLCPP_INFO(this->get_logger(), "Using timestamp latency offset: %.3f ms", latency_offset_ms);
     }
 
 private:
@@ -88,7 +94,7 @@ private:
         
         if (cap_.read(frame)) {
             auto msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
-            const rclcpp::Time stamp = this->now();
+            const rclcpp::Time stamp = this->now() - latency_offset_;
             msg->header.stamp = stamp;
             msg->header.frame_id = frame_id_;
             camera_info_msg_->header.stamp = stamp;
@@ -106,6 +112,7 @@ private:
     std::shared_ptr<sensor_msgs::msg::CameraInfo> camera_info_msg_;
     rclcpp::TimerBase::SharedPtr timer_;
     cv::VideoCapture cap_;
+    rclcpp::Duration latency_offset_{0, 0};
 };
 
 int main(int argc, char* argv[])
