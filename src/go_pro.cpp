@@ -18,9 +18,11 @@ public:
         // Load the camera parameters from YAML
         std::string package_prefix = ament_index_cpp::get_package_prefix("camera_cpp");
         std::string camera_info_file = package_prefix + "/share/camera_cpp/config/camera_params.yaml";
+        
 
         this->declare_parameter<std::string>("camera_info_file", camera_info_file);
         this->get_parameter("camera_info_file", camera_info_file);
+        
 
         // Parse YAML
         YAML::Node config = YAML::LoadFile(camera_info_file);
@@ -60,7 +62,7 @@ public:
             return;
         }
 
-        this->declare_parameter<double>("fps", 5.0);
+        this->declare_parameter<double>("fps", 30.0);
         double fps = this->get_parameter("fps").as_double();
         if (fps <= 0.0) {
             RCLCPP_WARN(this->get_logger(), "FPS must be positive. Defaulting to 30.");
@@ -73,14 +75,24 @@ public:
             timer_period,
             std::bind(&ImagePublisher::timer_callback, this)
         );
+
+        this->declare_parameter<std::string>("frame_id", "go_pro_optical_frame");
+        this->get_parameter("frame_id", frame_id_);
     }
 
 private:
+    std::string frame_id_;
     void timer_callback()
     {
         cv::Mat frame;
+        
         if (cap_.read(frame)) {
             auto msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
+            const rclcpp::Time stamp = this->now();
+            msg->header.stamp = stamp;
+            msg->header.frame_id = frame_id_;
+            camera_info_msg_->header.stamp = stamp;
+            camera_info_msg_->header.frame_id = frame_id_;
             img_pub_->publish(*msg);
             cam_info_pub_->publish(*camera_info_msg_);
         } else {
