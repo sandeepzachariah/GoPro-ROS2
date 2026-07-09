@@ -80,7 +80,18 @@ private:
     {
         cv::Mat frame;
         if (cap_.read(frame)) {
-            auto msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
+            rclcpp::Time now = this->now();
+            std::string frame_id = "go_pro_camera";
+
+            std_msgs::msg::Header header;
+            header.stamp = now;
+            header.frame_id = frame_id;
+
+            auto msg = cv_bridge::CvImage(header, "bgr8", frame).toImageMsg();
+
+            camera_info_msg_->header.stamp = now;
+            camera_info_msg_->header.frame_id = frame_id;
+
             img_pub_->publish(*msg);
             cam_info_pub_->publish(*camera_info_msg_);
         } else {
